@@ -8,7 +8,7 @@
 
 *FP1 Strategies* is a campaign consulting and advertising firm dedicated to helping Republican candidates achieve political success. However, the divide between Liberals and Conservatives has been growing at an alarming rate these last few decades, and this has dramatically affected the American political landscape. Within the Republican and Democratic parties, the number of members with a highly negative view of the opposing party has more than doubled since 1994, while the ideological overlap between the two parties has diminished greatly.
 
-This team at *FP1 Strategies* sees the in **partisanship** as an opportunity. They believe that, because of the factors discussed above, candidates who attempt to placate both sides, trying to be pallatable to everyone, are destined to fail. Those who are willing to take a more direct and authentic approach, who can resonate with the Conservative demographic, can achieve great success. However, the company needs a better way of identifying and reaching out to the Conservative population. Traditional canvassing is slow, cumbersome, and inefficient. In order to improve this, the team at *FP1 Strategies* has come up with an idea called *remote canvassing*. They want to use machine learning to identify a person's ideological preference (i.e. if they are Conservative/Liberal) solely based on their past activity on social media. If the person is determined to be sufficiently conservative, it is assumed they are likely to vote Republican, and the team would reach out to them online, that is, canvass remotely. This is just half the battle, because they also need to know specifically which issues to address when canvassing for potential supporters. Thus, the requirement of being identified as "sufficiently conservative" has to be done with respect to one of the major societal issues that a political candidate can address and garner support for.
+This team at *FP1 Strategies* sees the increase in partisanship as an opportunity. They believe that, because of the factors discussed above, candidates who attempt to placate both sides, trying to be pallatable to everyone, are destined to fail. Those who are willing to take a more direct and authentic approach, who can resonate with the Conservative demographic, can achieve great success. However, the company needs a better way of identifying and reaching out to the Conservative population. Traditional canvassing is slow, cumbersome, and inefficient. In order to improve this, the team at *FP1 Strategies* has come up with an idea called *remote canvassing*. They want to use machine learning to identify a person's ideological preference (i.e. if they are Conservative/Liberal) solely based on their past activity on social media. If the person is determined to be sufficiently conservative, it is assumed they are likely to vote Republican, and the team would reach out to them online, that is, canvass remotely. This is just half the battle, because they also need to know specifically which issues to address when canvassing for potential supporters. Thus, the requirement of being identified as "sufficiently conservative" has to be done with respect to one of the major societal issues that a political candidate can address and garner support for.
 
 *The company wishes to see a demonstration showing that remote canvassing is practically achievable. It should utilize data form social media to answer the following questions:*
 
@@ -140,7 +140,7 @@ Data extracted from the from the Reddit API was stored in the database file: `da
 > * __id__ *[str] - unique identifier of a Reddit user identified in the `posts`/`comments` table*
 > * __subreddit_id__ *[int] - unique identifier of subreddit in which the above Reddit user created a post/comment*
 
-> The `subreddits` and `comments` tables from `data/reddit_data.db` were loaded into memory, and a corpus, made up of individual comments, was created by merging the two `DataFrame` objects.
+> The `subreddits`, `posts`, and `comments` tables from `data/reddit_data.db` were loaded into memory, and a corpus, made up of individual comments, was created by merging these `DataFrame` objects.
 
 ## **Data Preparation**
 ---
@@ -154,16 +154,22 @@ Data extracted from the from the Reddit API was stored in the database file: `da
 
 As was mentioned previously, the net number of upvotes a comment garnered was given by its entry in the `score` column. In other words, the `score` attribute quantifies how valuable, or meaningful, the parent Subreddit's community finds the comment. Therefore, the `score` can be thought of as a quantitative measure of how well a comment represents with its `issue` and `stance` labels. This is obviously important with respect to the purpose of this analysis, and so the `score` column was used to engineer a new feature, called `quality`.
 
-> The `quality` feature was created to allow the weighting of samples according to how well they represent their corresponding `issue` and `stance` labels.
+> *The `quality` feature was created to allow the weighting of samples according to how well they represent their corresponding `issue` and `stance` labels.*
 >
 > Assuming all comments with a negative `score` value have been dropped, the `quality` ($Q$) of a comment with `score` $S$ and `lifetime` $\Delta T$ days, was calculated using the following equation:
 >
 > $$ Q = 1 + \ln (1 + \frac{S}{\Delta T} ) $$
 
 The above equation was formulated, instead of using the raw `score` value, because:
-* it accounts for time by taking the time-averaged `score` -- $\frac{S}{\Delta T}$
-* squishes the range of values to within a more reasonable range by taking the logarithm of the time-averaged `score` -- $\ln(1 + \frac{S}{\Delta T})$
-* given that negative `score` values have been dropped (which is a requirement), ensures the `quality` multiplier is no less than 1 -- $1 + \ln(1 + \frac{S}{\Delta T})$
+* *it accounts for time by taking the time-averaged `score` -- $\frac{S}{\Delta T}$*
+* *squishes the range of values to within a more reasonable range by taking the logarithm of the time-averaged `score` -- $\ln(1 + \frac{S}{\Delta T})$*
+* *given that negative `score` values have been dropped (which is a requirement), ensures the `quality` multiplier is no less than 1 -- $1 + \ln(1 + \frac{S}{\Delta T})$*
+* *for example, if a comment gets:*
+
+    - $0 \frac{\text{upvotes}}{day} \implies Q=1$
+    - $1 \frac{\text{upvotes}}{day} \implies Q=1.69$
+    - $10 \frac{\text{upvotes}}{day} \implies Q=2.40$
+    - $100 \frac{\text{upvotes}}{day} \implies Q=5.62$
 
 ### Text Normalization
 
@@ -213,11 +219,7 @@ Some key statistics were extracted from the Corpus after its documents were norm
 
 ##### **`ISSUE`**
 
-The plot below shows the frequency of each `issue` label in the dataset:
-
-<center><img src="images/corpus-statistics/ISSUE-label-frequencies.png" width='400'></center>
-
-The above figure indicates that the Corpus was an imbalanced dataset with respect to the `issue` label:
+The plot below indicates that the Corpus was an imbalanced dataset with respect to the `issue` label:
 
 * $~ 35 \%$ of comments were about `GUN CONTROL`
 * $~ 23 \%$ of comments were about `ABORTION`
@@ -227,13 +229,15 @@ The above figure indicates that the Corpus was an imbalanced dataset with respec
 
 Therefore, the sample weights had to be balanced with respect to the `issue` label.
 
+<center><img src="images/corpus-statistics/ISSUE-label-frequencies.png" width='400'></center>
+
 ##### **`STANCE`**
 
-The plot below shows the frequency of each `stance` label in the dataset:
+The plot below indicates that the Corpus is an imbalanced dataset with respect to the `stance` label as well. It shows there were roughly twice as many comments with a `CONSERVATIVE` stance than comments with a `LIBERAL` stance. Therefore, the sample weights had to be balanced with respect to the `stance` label.
+
 
 <center><img src="images/corpus-statistics/STANCE-label-frequencies.png" width='200'></center>
 
-The plot above indicates that the Corpus is an imbalanced dataset with respect to the `stance` label as well. It shows there were roughly twice as many comments with a `CONSERVATIVE` stance than comments with a `LIBERAL` stance. Therefore, the sample weights had to be balanced with respect to the `stance` label.
 
 #### **Average Length of Tokenized Document**
 
@@ -348,10 +352,10 @@ The `TEN 4` model was evaluated against the Test Set, its performance with respe
 
 The performance of the `TEN 4` model on the Test Set, with respect to the `stance` label, is summarized as follows:
 
->   - $81\%$ of `CONSERVATIVE` comments were labeled correctly
->   - $19\%$ of `CONSERVATIVE` comments were incorrectly labeled as `LIBERAL`
->   - $48\%$ of `LIBERAL` comments were labeled correctly
->   - $52\%$ of `LIBERAL` comments were incorrectly labeled as `CONSERVATIVE`
+>   - $81\%$ of all `CONSERVATIVE` comments were labeled correctly
+>   - $48\%$ of all `LIBERAL` comments were labeled correctly
+>   - wrongly predicted $52\%$ of `LIBERAL` comments as `CONSERVATIVE`
+>   - wrongly predicted $19\%$ of `CONSERVATIVE` comments as `LIBERAL`
 ---
 >   - Overall, the model performed well when identifying `CONSERVATIVE` comments but very poorly when identifying `LIBERAL` comments
 > - The model's ability to generalize to unseen data needs alot of improvement:
@@ -359,9 +363,9 @@ The performance of the `TEN 4` model on the Test Set, with respect to the `stanc
 
 ### `ISSUE`
 
-<center><img src="images/ten4/ISSUE-test-metrics.png" width='800'></center>
+<center><img src="images/ten4/ISSUE-test-metrics.png" width='700'></center>
 
-<center><img src="images/ten4/ISSUE-test-confusion-matrices.svg" width='800'></center>
+<center><img src="images/ten4/ISSUE-test-confusion-matrices.svg" width='700'></center>
 
 The performance of the `TEN 4` model on the Test Set, with respect to the `issue` label, is summarized as follows:
 
@@ -371,8 +375,8 @@ The performance of the `TEN 4` model on the Test Set, with respect to the `issue
 >   - $70\%$ of all comments related to `HEALTHCARE` were labeled correctly
 >   - $60\%$ of all comments related to `IMMIGRATION` were labeled correctly
 ---
-> - The model performed best when identifying comments about `ABORTION`
-> - The model performed worst when identifying comments about `IMMIGRATION`
+> - Performed best when identifying comments about `ABORTION`
+> - Performed worst when identifying comments about `IMMIGRATION`
 
 ---
 > - Overall, the model performed poorly on all `issue` labels
