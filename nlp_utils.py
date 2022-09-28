@@ -326,7 +326,7 @@ def get_corpus_stopwords(corpus,
                              *,
                              document_col,
                              label_col,
-                             threshold=0.0001):
+                             threshold):
 
     stopwords_by_label = {}
     for label_name in corpus[label_col].unique():

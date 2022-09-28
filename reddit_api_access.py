@@ -3,7 +3,7 @@ import praw
 from prawcore.exceptions import PrawcoreException
 import sqlite3
 import os
-from collections import namedtuple
+from itertools import chain
 from nlp_utils import print_completion_message
 
 
@@ -249,8 +249,8 @@ def extract_data(reddit_instance, *, subreddit_dict,  database_path, max_post_re
 
 
 def main():
-    MAX_POST_REQUESTS = 100
-    MAX_COMMENT_REQUESTS = 20
+    MAX_POST_REQUESTS = 50
+    MAX_COMMENT_REQUESTS = 50
     DATABASE_PATH = "data/reddit_data.db"
     SUBREDDIT_DICT = {
                             "conservative":
@@ -286,9 +286,9 @@ def main():
                     database_path=DATABASE_PATH,
                     max_post_requests=MAX_POST_REQUESTS,
                     max_comment_requests=MAX_COMMENT_REQUESTS,
-                    select_subreddits=None,
+                    select_subreddits=list(chain(range(2,11),range(12,25))),
                     sort="top",
-                    time_filter="month")
+                    time_filter="all")
 
 
 
