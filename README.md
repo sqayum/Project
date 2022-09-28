@@ -424,7 +424,6 @@ Review the full analysis in the [Jupyter Notebook](./political-identity-analysis
 ├── data
       ├── common_names.txt
       ├── english_stopwords.txt
-      ├── sentiment140.csv
       └── reddit_data.db
 ├── images
       ├── corpus-statistics
